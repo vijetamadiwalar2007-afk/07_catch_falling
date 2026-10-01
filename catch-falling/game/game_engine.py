@@ -62,22 +62,24 @@ class GameEngine:
             obj.update()
 
         basket_rect = self.basket.get_rect()
-       caught_objects = []
 
-caught_objects = []
+        caught_objects = []
 
-for obj in self.objects:
-    if is_caught(basket_rect, obj):
-        caught_objects.append(obj)
+        for obj in self.objects:
+            if is_caught(basket_rect, obj):
+                caught_objects.append(obj)
 
-self.score += len(caught_objects)
+        self.score += len(caught_objects)
 
-for obj in caught_objects:
-    self.objects.remove(obj)
+        for obj in caught_objects:
+            self.objects.remove(obj)
 
-        missed = [o for o in self.objects if o.is_past_bottom(HEIGHT)]
+        missed = [o for o in self.objects if o.is_past_past_bottom(HEIGHT)]
         if missed:
-            self.objects = [o for o in self.objects if not o.is_past_bottom(HEIGHT)]
+            self.objects = [
+                o for o in self.objects
+                if not o.is_past_bottom(HEIGHT)
+            ]
             self.misses += len(missed)
             if self.misses >= MAX_MISSES:
                 self.game_over = True
@@ -85,8 +87,16 @@ for obj in caught_objects:
     def draw(self, surface, font):
         from game import renderer
         renderer.draw_scene(surface, self.basket, self.objects)
-        renderer.draw_text(surface, font, f"Score: {self.score}", (10, 10))
-        renderer.draw_text(surface, font, f"Misses: {self.misses}/{MAX_MISSES}", (10, 36))
+        renderer.draw_text(
+            surface, font, f"Score: {self.score}", (10, 10)
+        )
+        renderer.draw_text(
+            surface, font, f"Misses: {self.misses}/{MAX_MISSES}", (10, 36)
+        )
 
         if self.game_over:
-            renderer.draw_banner(surface, font, f"Game Over! Final score: {self.score}. Press R to restart.")
+            renderer.draw_banner(
+                surface,
+                font,
+                f"Game Over! Final score: {self.score}. Press R to restart."
+            )

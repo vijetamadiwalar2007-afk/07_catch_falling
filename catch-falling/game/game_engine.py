@@ -4,6 +4,7 @@ GameEngine: owns the basket and all falling objects.
 Task 1: fixed collision detection and safe object removal.
 Task 2: improved basket boundaries.
 Task 3: controlled object spawning.
+Task 4: temporary basket speed boost.
 """
 
 import random
@@ -20,6 +21,10 @@ MAX_SPAWN_INTERVAL_FRAMES = 65
 MAX_OBJECTS_ON_SCREEN = 5
 MIN_SPAWN_X_DISTANCE = 60
 
+# Task 4 speed boost settings
+BOOST_MULTIPLIER = 2
+BOOST_DURATION_FRAMES = 180
+
 MAX_MISSES = 5
 
 
@@ -28,29 +33,30 @@ class GameEngine:
         self.basket = Basket(x=WIDTH / 2, y=HEIGHT - 30)
         self.objects = []
 
-        # Task 3: start with a varied spawn interval.
+        # Task 3: varied spawn interval.
         self.frames_until_spawn = random.randint(
             MIN_SPAWN_INTERVAL_FRAMES,
             MAX_SPAWN_INTERVAL_FRAMES
         )
 
-        # Remember the previous spawn position so objects
-        # do not repeatedly appear in the same spot.
+        # Task 3: remember previous spawn position.
         self.last_spawn_x = None
 
         self.score = 0
         self.misses = 0
         self.game_over = False
 
+        # Task 4: boost timer.
+        self.boost_frames_remaining = 0
+
     def _spawn_object(self):
-        # Keep the entire falling object inside the playable width.
+        # Keep objects inside the playable width.
         min_x = 20
         max_x = WIDTH - 20
 
-        # Try several times to find a position that is
-        # sufficiently different from the previous spawn.
         x = random.randint(min_x, max_x)
 
+        # Avoid repeatedly spawning in the same horizontal position.
         if self.last_spawn_x is not None:
             for _ in range(10):
                 candidate_x = random.randint(min_x, max_x)
@@ -73,13 +79,21 @@ class GameEngine:
         if self.game_over:
             return
 
+        # Task 4: use increased speed while boost is active.
+        if self.boost_frames_remaining > 0:
+            self.basket.speed = (
+                self.basket.normal_speed * BOOST_MULTIPLIER
+            )
+        else:
+            self.basket.speed = self.basket.normal_speed
+
         if keys_pressed[pygame.K_LEFT]:
             self.basket.x -= self.basket.speed
 
         if keys_pressed[pygame.K_RIGHT]:
             self.basket.x += self.basket.speed
 
-        # Keep the entire basket inside the screen.
+        # Task 2: keep the entire basket inside the screen.
         half_width = self.basket.width / 2
         self.basket.x = max(
             half_width,
@@ -89,22 +103,34 @@ class GameEngine:
     def handle_keydown(self, key):
         if self.game_over and key == pygame.K_r:
             self.__init__()
+            return
+
+        # Task 4: activate speed boost with Spacebar.
+        if key == pygame.K_SPACE and self.boost_frames_remaining <= 0:
+            self.boost_frames_remaining = BOOST_DURATION_FRAMES
 
     def update(self):
         if self.game_over:
             return
 
+        # Task 4: count down the boost timer.
+        if self.boost_frames_remaining > 0:
+            self.boost_frames_remaining -= 1
+
+            if self.boost_frames_remaining == 0:
+                self.basket.speed = self.basket.normal_speed
+
         # Task 3: count down to the next spawn.
         self.frames_until_spawn -= 1
 
-        # Only spawn if there is room on the screen.
+        # Only spawn when there is room on the screen.
         if (
             self.frames_until_spawn <= 0
             and len(self.objects) < MAX_OBJECTS_ON_SCREEN
         ):
             self._spawn_object()
 
-            # Choose a new random interval for the next object.
+            # Choose a new random interval.
             self.frames_until_spawn = random.randint(
                 MIN_SPAWN_INTERVAL_FRAMES,
                 MAX_SPAWN_INTERVAL_FRAMES
@@ -115,18 +141,15 @@ class GameEngine:
 
         basket_rect = self.basket.get_rect()
 
-        # Task 1: collect caught objects first instead of
-        # removing them while iterating through the list.
+        # Task 1: collect caught objects before removing them.
         caught_objects = []
 
         for obj in self.objects:
             if is_caught(basket_rect, obj):
                 caught_objects.append(obj)
 
-        # Update score for all caught objects.
         self.score += len(caught_objects)
 
-        # Remove caught objects after the loop is finished.
         for obj in caught_objects:
             self.objects.remove(obj)
 
@@ -168,6 +191,15 @@ class GameEngine:
             f"Misses: {self.misses}/{MAX_MISSES}",
             (10, 36)
         )
+
+        # Task 4: clearly show the boost while active.
+        if self.boost_frames_remaining > 0:
+            renderer.draw_text(
+                surface,
+                font,
+                "SPEED BOOST!",
+                (10, 62)
+            )
 
         if self.game_over:
             renderer.draw_banner(

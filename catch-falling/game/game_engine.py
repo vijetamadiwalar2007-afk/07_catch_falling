@@ -62,10 +62,16 @@ class GameEngine:
             obj.update()
 
         basket_rect = self.basket.get_rect()
-        for obj in self.objects:                  # BUG: mutating this list while iterating over it
-            if is_caught(basket_rect, obj):
-                self.score += 1
-                self.objects.remove(obj)
+       caught_objects = []
+
+for obj in self.objects:
+    if is_caught(basket_rect, obj):
+        caught_objects.append(obj)
+
+self.score += len(caught_objects)
+
+for obj in caught_objects:
+    self.objects.remove(obj)
 
         missed = [o for o in self.objects if o.is_past_bottom(HEIGHT)]
         if missed:

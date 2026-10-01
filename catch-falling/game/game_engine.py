@@ -36,10 +36,13 @@ class GameEngine:
     def handle_input(self, keys_pressed):
         if self.game_over:
             return
+
         if keys_pressed[pygame.K_LEFT]:
             self.basket.x -= self.basket.speed
+
         if keys_pressed[pygame.K_RIGHT]:
             self.basket.x += self.basket.speed
+
         # Boundary handling: only clamps against the screen edges, not
         # accounting for the basket's own width - it can hang half off
         # either side of the screen.
@@ -54,6 +57,7 @@ class GameEngine:
             return
 
         self.frames_until_spawn -= 1
+
         if self.frames_until_spawn <= 0:
             self._spawn_object()
             self.frames_until_spawn = SPAWN_INTERVAL_FRAMES
@@ -63,35 +67,58 @@ class GameEngine:
 
         basket_rect = self.basket.get_rect()
 
+        # Collect caught objects first instead of removing them
+        # while iterating through the original list.
         caught_objects = []
 
         for obj in self.objects:
             if is_caught(basket_rect, obj):
                 caught_objects.append(obj)
 
+        # Update score for all caught objects.
         self.score += len(caught_objects)
 
+        # Remove caught objects after the loop is finished.
         for obj in caught_objects:
             self.objects.remove(obj)
 
-        missed = [o for o in self.objects if o.is_past_past_bottom(HEIGHT)]
+        missed = [
+            o for o in self.objects
+            if o.is_past_bottom(HEIGHT)
+        ]
+
         if missed:
             self.objects = [
                 o for o in self.objects
                 if not o.is_past_bottom(HEIGHT)
             ]
+
             self.misses += len(missed)
+
             if self.misses >= MAX_MISSES:
                 self.game_over = True
 
     def draw(self, surface, font):
         from game import renderer
-        renderer.draw_scene(surface, self.basket, self.objects)
-        renderer.draw_text(
-            surface, font, f"Score: {self.score}", (10, 10)
+
+        renderer.draw_scene(
+            surface,
+            self.basket,
+            self.objects
         )
+
         renderer.draw_text(
-            surface, font, f"Misses: {self.misses}/{MAX_MISSES}", (10, 36)
+            surface,
+            font,
+            f"Score: {self.score}",
+            (10, 10)
+        )
+
+        renderer.draw_text(
+            surface,
+            font,
+            f"Misses: {self.misses}/{MAX_MISSES}",
+            (10, 36)
         )
 
         if self.game_over:

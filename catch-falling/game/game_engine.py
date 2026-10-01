@@ -43,8 +43,12 @@ class GameEngine:
         if keys_pressed[pygame.K_RIGHT]:
             self.basket.x += self.basket.speed
 
-        # Boundary handling
-        self.basket.x = max(0, min(WIDTH, self.basket.x))
+        # Keep the entire basket inside the screen.
+        half_width = self.basket.width / 2
+        self.basket.x = max(
+            half_width,
+            min(WIDTH - half_width, self.basket.x)
+        )
 
     def handle_keydown(self, key):
         if self.game_over and key == pygame.K_r:

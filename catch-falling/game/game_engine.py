@@ -64,6 +64,8 @@ class GameEngine:
         basket_rect = self.basket.get_rect()
        caught_objects = []
 
+caught_objects = []
+
 for obj in self.objects:
     if is_caught(basket_rect, obj):
         caught_objects.append(obj)

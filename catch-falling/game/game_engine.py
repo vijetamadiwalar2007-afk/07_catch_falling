@@ -43,9 +43,7 @@ class GameEngine:
         if keys_pressed[pygame.K_RIGHT]:
             self.basket.x += self.basket.speed
 
-        # Boundary handling: only clamps against the screen edges, not
-        # accounting for the basket's own width - it can hang half off
-        # either side of the screen.
+        # Boundary handling
         self.basket.x = max(0, min(WIDTH, self.basket.x))
 
     def handle_keydown(self, key):
